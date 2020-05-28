@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  filebeat:
+    image: ${CI_REGISTRY_IMAGE}/${COMPOSE_PROJECT_NAME}_filebeat_${AGENT_HOST}
+    build:
+      context: build/filebeat
+    container_name: ${COMPOSE_PROJECT_NAME}_filebeat
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - ELASTIC_ROOT_USER=${ELASTIC_ROOT_USER}
+      - ELASTIC_ROOT_PASSWORD=${ELASTIC_ROOT_PASSWORD}
+      - SERVER_HOST=${SERVER_HOST}
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${YII_APP_LOG}:/data/log/php
+      - ${VOLUMES_DIR}/${COMPOSE_PROJECT_NAME}/filebeat/logs:/usr/share/filebeat/logs
+      - ${VOLUMES_DIR}/${COMPOSE_PROJECT_NAME}/filebeat/data:/usr/share/filebeat/data
+  metricbeat:
+    image: ${CI_REGISTRY_IMAGE}/${COMPOSE_PROJECT_NAME}_metricbeat_${AGENT_HOST}
+    build:
+      context: ../../agent-templates/metricbeat
+    container_name: ${COMPOSE_PROJECT_NAME}_metricbeat
+    restart: always
+    environment:
+      - ELASTIC_ROOT_USER=${ELASTIC_ROOT_USER}
+      - ELASTIC_ROOT_PASSWORD=${ELASTIC_ROOT_PASSWORD}
+      - SERVER_HOST=${SERVER_HOST}
+    env_file:
+      - .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /proc:/hostfs/proc:ro
+      - /:/hostfs:ro

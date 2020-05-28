@@ -1,0 +1,32 @@
+#commom
+ANY (.|\r|\n)*
+DATESTAMP (%{YEAR}-%{MONTHNUM2}-%{MONTHDAY} %{HOUR}:%{MINUTE}:%{SECOND})
+HTTP_METHOD (OPTIONS|GET|HEAD|POST|PUT|DELETE|TRACE|CONNECT)
+
+#yii
+YII_ERROR_LEVEL (error|warning|info|trace|profile begin|profile end|profile)
+YII_LOG_TEMPLATE %{DATESTAMP:time_local} \[(%{IP:ip}|-)\]\[(%{INT:user_id}|-)\]\[(%{DATA:session_id}|-)\]\[%{YII_ERROR_LEVEL:status}\]\[%{DATA:category}\]
+YII_LOG_APP %{YII_LOG_TEMPLATE}%{ANY:description}
+YII_LOG_MAIL %{YII_LOG_TEMPLATE}%{DATA:any}\n^to: %{EMAILADDRESS:email}\n^subject: %{ANY:subject}\n^textBody: %{ANY:text}\n^viewParams: %{DATA:viewParams}\n^files: %{DATA:files}$
+YII_LOG_QUEUE %{YII_LOG_TEMPLATE} \[%{DATA:job_id}\] %{DATA:job}(\(attempt\: %{INT:attempt}\)|) is %{WORD:state}%{ANY:description}
+
+##
+# Nginx error log
+#
+# error_log /dev/stderr notice;
+##
+NGINX_ERRORDATE %{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}
+NGINX_ERROR %{NGINX_ERRORDATE:time_local} \[%{LOGLEVEL:level}\] %{INT:process_id}#%{INT:thread_id}: \*(%{INT:connection_id})? %{GREEDYDATA:description}
+
+##
+# Nginx access log
+#
+# access_log /dev/stdout logstash;
+#
+# Формат access логов для nginx читаемый logstash
+# log_format logstash '$remote_addr - $remote_user [$time_local] "$host" '
+#                        '"$request" $status $body_bytes_sent '
+#                        '"$http_referer" "$http_user_agent"';
+##
+NGINX_ACCESS %{IPORHOST:visitor_ip} - %{USERNAME:remote_user} \[%{HTTPDATE:time_local}\] "%{DATA:server_name}" "%{HTTP_METHOD:method} %{URIPATHPARAM:path} HTTP/%{NUMBER:http_version}" %{INT:status} %{INT:body_bytes_sent} "%{DATA:referer}" %{QS:user_agent}
+

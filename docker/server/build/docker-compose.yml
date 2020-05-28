@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  elasticsearch:
+    image: ${CI_REGISTRY_IMAGE}/${COMPOSE_PROJECT_NAME}_elasticsearch_server
+    build: elasticsearch
+  logstash:
+    image: ${CI_REGISTRY_IMAGE}/${COMPOSE_PROJECT_NAME}_logstash_server
+    build: logstash
+  kibana:
+    image: ${CI_REGISTRY_IMAGE}/${COMPOSE_PROJECT_NAME}_kibana_server
+    build: kibana

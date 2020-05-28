@@ -1,0 +1,62 @@
+input {
+  beats {
+    port => 5044
+  }
+}
+
+filter {
+  if [stream] == "stdout" {
+    grok {
+      patterns_dir => "/usr/share/logstash/config/patterns"
+      match => { "message" => "%{NGINX_ACCESS}" }
+      remove_tag => ["nginx_access", "_grokparsefailure"]
+      add_field => {
+        "type" => "nginx_access"
+      }
+    }
+
+    date {
+      match => ["time_local", "dd/MMM/YYYY:HH:mm:ss Z"]
+      target => "@timestamp"
+      remove_field => "time_local"
+    }
+
+    useragent {
+      source => "user_agent"
+      target => "useragent"
+      remove_field => "user_agent"
+    }
+  }
+
+  if [stream] == "stderr" {
+    grok {
+      patterns_dir => "/usr/share/logstash/config/patterns"
+      match => { "message" => "%{NGINX_ERROR}" }
+      remove_tag => ["nginx_error", "_grokparsefailure"]
+      add_field => {
+        "type" => "nginx_error"
+      }
+    }
+
+    date {
+      match => ["time_local", "YYYY/MM/dd HH:mm:ss"]
+      target => "@timestamp"
+      remove_field => "time_local"
+    }
+  }
+
+  mutate {
+    remove_field => ["docker","container", "input", "log", "ecs" ]
+  }
+}
+
+output {
+  if "nginx" in [tags] {
+    elasticsearch {
+      hosts => ["${SERVER_HOST}:9200"]
+      index => "logstash-%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+      user => "${ELASTIC_ROOT_USER}"
+      password => "${ELASTIC_ROOT_PASSWORD}"
+    }
+  }
+}

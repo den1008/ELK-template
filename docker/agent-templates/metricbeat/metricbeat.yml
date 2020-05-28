@@ -1,0 +1,32 @@
+name: "${AGENT_HOST}"
+
+#==========================  Modules configuration =================+===========
+metricbeat.modules:
+#------------------------------- System Module -------------------------------
+  - module: system
+    metricsets: ["cpu", "load", "memory", "network", "uptime", "filesystem"]
+    period: 10s
+#------------------------------ Docker Module -----------------------------
+  - module: docker
+    metricsets: ["cpu", "healthcheck", "memory"]
+    hosts: "unix:///var/run/docker.sock"
+    period: 60s
+
+
+#============================== Setup Index Template ===========================
+setup.template.overwrite: true
+setup.template.enabled: true
+setup.template.name: "metricbeat"
+setup.template.pattern: "metricbeat-*"
+setup.template.settings:
+  index.refresh_interval: "10s"
+
+#============================== Setup ILM ====+++++++++++=======================
+setup.ilm.enabled: false # if true or auto output.elasticsearch.index not applied
+
+#============================== Setup Output =======================+===========
+output.elasticsearch:
+  hosts: "${SERVER_HOST}:9200"
+  index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+  username: "${ELASTIC_ROOT_USER}"
+  password: "${ELASTIC_ROOT_PASSWORD}"

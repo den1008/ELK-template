@@ -1,0 +1,95 @@
+input {
+  beats {
+    port => 5044
+  }
+}
+
+filter {
+  if "yii_app" in [tags] {
+    grok {
+      patterns_dir => "/usr/share/logstash/config/patterns"
+      match => { "message" => "%{YII_LOG_APP}" }
+      remove_tag => ["_grokparsefailure"]
+      add_field => {
+        "type" => "yii_app"
+      }
+    }
+
+    date {
+      match => ["time_local", "YYYY-MM-dd HH:mm:ss"]
+      target => "@timestamp"
+      timezone => "Europe/Moscow"
+      remove_field => "time_local"
+    }
+  }
+
+  if "yii_queue" in [tags] {
+      grok {
+        patterns_dir => "/usr/share/logstash/config/patterns"
+        match => { "message" => "%{YII_LOG_QUEUE}" }
+        remove_tag => ["_grokparsefailure"]
+        add_field => {
+          "type" => "yii_queue"
+        }
+      }
+
+      date {
+        match => ["time_local", "YYYY-MM-dd HH:mm:ss"]
+        target => "@timestamp"
+        timezone => "Europe/Moscow"
+        remove_field => "time_local"
+      }
+    }
+
+  if "yii_mail" in [tags] {
+      grok {
+        patterns_dir => "/usr/share/logstash/config/patterns"
+        match => { "message" => "%{YII_LOG_MAIL}" }
+        remove_tag => ["_grokparsefailure"]
+        remove_field => "any"
+        add_field => {
+          "type" => "yii_mail"
+        }
+      }
+
+      date {
+        match => ["time_local", "YYYY-MM-dd HH:mm:ss"]
+        target => "@timestamp"
+        timezone => "Europe/Moscow"
+        remove_field => "time_local"
+      }
+    }
+
+  mutate {
+    remove_field => ["docker","container", "input", "log", "ecs" ]
+  }
+}
+
+output {
+  if "yii_app" in [tags] {
+    elasticsearch {
+      hosts => ["${SERVER_HOST}:9200"]
+      index => "logstash-%{[@metadata][beat]}-yii_app-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+      user => "${ELASTIC_ROOT_USER}"
+      password => "${ELASTIC_ROOT_PASSWORD}"
+    }
+  }
+
+  if "yii_queue" in [tags] {
+    elasticsearch {
+      hosts => ["${SERVER_HOST}:9200"]
+      index => "logstash-%{[@metadata][beat]}-yii_queue-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+      user => "${ELASTIC_ROOT_USER}"
+      password => "${ELASTIC_ROOT_PASSWORD}"
+    }
+  }
+
+  if "yii_mail" in [tags] {
+    elasticsearch {
+      hosts => ["${SERVER_HOST}:9200"]
+      index => "logstash-%{[@metadata][beat]}-yii_mail-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+      user => "${ELASTIC_ROOT_USER}"
+      password => "${ELASTIC_ROOT_PASSWORD}"
+    }
+  }
+}

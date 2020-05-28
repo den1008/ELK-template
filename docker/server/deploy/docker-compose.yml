@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  elasticsearch:
+    image: ${CI_REGISTRY_IMAGE}/${COMPOSE_PROJECT_NAME}_elasticsearch_server
+    container_name: ${COMPOSE_PROJECT_NAME}_elastic
+    user: elasticsearch
+    entrypoint: ["/entrypoint.sh"]
+    command: ["/usr/share/elasticsearch/bin/elasticsearch"]
+    environment:
+      - "ES_JAVA_OPTS=-Xms256m -Xmx1024m"
+      - TAKE_FILE_OWNERSHIP=1
+      - ELASTIC_ROOT_PASSWORD=${ELASTIC_ROOT_PASSWORD}
+    ulimits:
+      nproc: 65536
+      nofile: 65536
+    volumes:
+      - ${ELASTIC_VOLUMES_DIR}:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+  logstash:
+    image: ${CI_REGISTRY_IMAGE}/${COMPOSE_PROJECT_NAME}_logstash_server
+    container_name: ${COMPOSE_PROJECT_NAME}_logstash
+    environment:
+      - "ES_JAVA_OPTS=-Xms256m -Xmx512m"
+      - TAKE_FILE_OWNERSHIP=1
+      - SERVER_HOST=elasticsearch
+      - ELASTIC_ROOT_USER=${ELASTIC_ROOT_USER}
+      - ELASTIC_ROOT_PASSWORD=${ELASTIC_ROOT_PASSWORD}
+    volumes:
+      - ${VOLUMES_DIR}/${COMPOSE_PROJECT_NAME}/logstash/data:/usr/share/logstash/data
+    ports:
+      - 5044:5044
+  kibana:
+    image: ${CI_REGISTRY_IMAGE}/${COMPOSE_PROJECT_NAME}_kibana_server
+    container_name: ${COMPOSE_PROJECT_NAME}_kibana
+    environment:
+      - ELASTIC_ROOT_USER=${ELASTIC_ROOT_USER}
+      - ELASTIC_ROOT_PASSWORD=${ELASTIC_ROOT_PASSWORD}
+    depends_on:
+      - elasticsearch
+    restart: always
+    ports:
+      - 5601:5601

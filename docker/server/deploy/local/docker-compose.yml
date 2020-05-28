@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  elasticsearch:
+    ports:
+      - 127.0.0.100:${FREE_PORT}:9200
+  logstash:
+    ports:
+      - 127.0.0.101:${FREE_PORT}:5044
+  kibana:
+    ports:
+      - 127.0.0.102:${FREE_PORT}:5601

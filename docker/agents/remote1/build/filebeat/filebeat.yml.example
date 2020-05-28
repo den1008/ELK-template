@@ -1,0 +1,63 @@
+filebeat.inputs:
+  - type: log
+    paths:
+      - "/data/log/php/app.log*"
+    multiline.pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \['
+    multiline.negate: true
+    multiline.match: after
+    tags: ["yii_app"]
+  - type: log
+    paths:
+      - "/data/log/php/queue/*.log"
+    multiline.pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \['
+    multiline.negate: true
+    multiline.match: after
+    tags: ["yii_queue"]
+  - type: log
+    paths:
+      - "/data/log/php/emails/*.log"
+    multiline.pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \['
+    multiline.negate: true
+    multiline.match: after
+    tags: ["yii_mail"]
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      templates:
+#============================== Setup Nginx ====================================
+        - condition:
+            contains:
+              docker.container.name: container_name_nginx
+          config:
+            - type: container
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+              exclude_lines: ["^\\s+[\\-`('.|_]"]  # drop asciiart lines
+              tags: ["nginx"]
+            - module: nginx
+              access:
+                enabled: true
+                containers:
+                  stream: "stdout"
+              error:
+                enabled: true
+                containers:
+                  stream: "stderr"
+
+#============================== Setup Index Template ===========================
+setup.template.overwrite: true
+setup.template.enabled: true
+setup.template.name: "filebeat"
+setup.template.pattern: "filebeat-*"
+setup.template.settings:
+  index.refresh_interval: "10s"
+
+
+#============================== Setup ILM ====+++++++++++=======================
+setup.ilm.enabled: false # if true output.elasticsearch.index not applied
+
+
+#============================== Setup Output =======================+===========
+output.logstash:
+  hosts: "${SERVER_HOST}:5044"
