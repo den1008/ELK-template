@@ -1,4 +1,4 @@
-Данный сервис реализует сбор и накопление логов приложений, а также метрик систем, на базе стека ELK.
+Данный сервис реализует сбор и накопление логов приложений, а также метрик систем, на базе стека ELK (Elastic Kibana Logstash).
 
 ## Схема работы:
 
@@ -22,7 +22,7 @@ graph RL;
 ```
 
 Директории:
-*  В директории server находятся сервисы образующие [ELK](https://www.elastic.co/guide/en/elastic-stack-get-started/current/get-started-elastic-stack.html) (Elastic Kibana Logstash)
+*  В директории server находятся сервисы образующие [ELK](https://www.elastic.co/guide/en/elastic-stack-get-started/current/get-started-elastic-stack.html)
 *  В директории agents находятся агенты [Beat](https://www.elastic.co/guide/index.html#_beats_collect_parse_and_ship)
 *  В директории agent-templates находятся шаблонные настройки агентов, например, metricbeat которые не изменяются от 
 сервера к серверу
